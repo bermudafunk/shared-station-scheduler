@@ -9,6 +9,9 @@ python-dateutil = "~=2.8.2"
 
 [dev-packages]
 black = "~=21.12b0"
+pytest = "~=6.2.5"
+pytest-asyncio = "*"
+pytest-httpserver = "*"
 
 [requires]
 python_version = "3.9"

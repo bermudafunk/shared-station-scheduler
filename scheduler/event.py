@@ -85,11 +85,11 @@ class ProgrammeEventProvider:
         if len(events) == 0:
             raise Exception("No events loaded")
 
-        if events[0].start <= start:
-            raise Exception(f"No event active at start {start}")
+        if not events[0].start <= start:
+            raise Exception(f"No event active at start {start}, {events[0]}")
 
-        if events[-1].end >= end:
-            raise Exception(f"No event active at end {end}")
+        if not events[-1].end >= end:
+            raise Exception(f"No event active at end {end}, {events[-1]}")
 
         check_events_matching_programmes(events)
         check_continuous_monotonic_events(events)
