@@ -1,0 +1,7 @@
+linux
+initrd
+initrd.gz
+base-initrd
+base-initrd.gz
+gopath/
+pixiecore
