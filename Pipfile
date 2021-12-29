@@ -6,11 +6,16 @@ name = "pypi"
 [packages]
 icalevents = "*"
 python-dateutil = "~=2.8.2"
+python-decouple = "~=3.5"
+uecp = ">=0.3.0"
+pyserial = "~=3.5"
+pyserial-asyncio = "*"
 
 [dev-packages]
 black = "~=21.12b0"
 pytest = "~=6.2.5"
 pytest-asyncio = "*"
+pytest-datadir = "*"
 pytest-httpserver = "*"
 
 [requires]

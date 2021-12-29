@@ -19,10 +19,57 @@ except ImportError:
         return zip(a, b)
 
 
+Event__eq__attributes = (
+    "uid",
+    "summary",
+    "description",
+    "start",
+    "end",
+    "all_day",
+    "recurring",
+    "location",
+    "private",
+    "created",
+    "last_modified",
+    "sequence",
+    "attendee",
+    "organizer",
+)
+
+
+def Event__eq__(self: Event, other) -> bool:
+    if not isinstance(other, Event):
+        return NotImplemented
+
+    return all(
+        getattr(self, attribute) == getattr(other, attribute)
+        for attribute in Event__eq__attributes
+    )
+
+
+Event.__eq__ = Event__eq__
+
+
 @enum.unique
 class Programme(enum.Enum):
-    bermudafunk = enum.auto()
-    radioaktiv = enum.auto()
+    bermudafunk = ("bermudafunk", 1, 1)
+    radioaktiv = ("radioaktiv", 2, 2)
+
+    def __new__(cls, name, rds_dataset, solus_selector):
+        obj = object.__new__(cls)
+        obj._value_ = name
+        obj._rds_dataset = rds_dataset
+        obj._solus_selector = solus_selector
+
+        return obj
+
+    @property
+    def rds_dataset(self):
+        return self._rds_dataset
+
+    @property
+    def solus_selector(self):
+        return self._solus_selector
 
 
 programme_names = {programme.name.lower() for programme in set(Programme)}
@@ -68,7 +115,13 @@ class ProgrammeEventProvider:
 
         self._events: list[Event] = []
 
+        self._active_event: typing.Optional[Event] = None
+        self._next_change_event: typing.Optional[Event] = None
+
         self._last_load: datetime = self._now()
+
+        self.active_event_observers: list[typing.Callable[[], None]] = []
+        self.next_change_event_observers: list[typing.Callable[[], None]] = []
 
     def _now(self) -> datetime:
         return _now(self._tz)
@@ -82,22 +135,30 @@ class ProgrammeEventProvider:
         )
         events = sorted(events)
 
-        if len(events) == 0:
-            raise Exception("No events loaded")
-
-        if not events[0].start <= start:
-            raise Exception(f"No event active at start {start}, {events[0]}")
-
-        if not events[-1].end >= end:
-            raise Exception(f"No event active at end {end}, {events[-1]}")
-
         check_events_matching_programmes(events)
         check_continuous_monotonic_events(events)
 
         self._last_load = start
         self._events = events
 
-    async def refresh_event_task(self):
+        (
+            old_active_event,
+            self._active_event,
+        ) = self._active_event, self._calc_active_event(events)
+        (
+            old_next_change_event,
+            self._next_change_event,
+        ) = self._next_change_event, self._calc_next_change_event(events)
+
+        if old_active_event != self._active_event:
+            for observer in self.active_event_observers:
+                observer()
+
+        if old_next_change_event != self._next_change_event:
+            for observer in self.next_change_event_observers:
+                observer()
+
+    async def refresh_event_loop(self):
         while True:
             try:
                 await self.refresh_events()
@@ -113,26 +174,30 @@ class ProgrammeEventProvider:
     def events(self) -> list[Event]:
         return list(self._events)
 
-    def get_active_event(self, now: datetime = None) -> Event:
-        return self._get_active_event(events=self.events, now=now)
+    @property
+    def active_event(self) -> typing.Optional[Event]:
+        return self._active_event
 
-    def _get_active_event(self, events: list[Event], now: datetime = None) -> Event:
+    @property
+    def next_change_event(self) -> typing.Optional[Event]:
+        return self._next_change_event
+
+    def _calc_active_event(
+        self, events: list[Event], now: datetime = None
+    ) -> typing.Optional[Event]:
         now = now or self._now()
         events = events
         for event in events:
             if event.start <= now <= event.end:
                 return event
-        raise Exception(f"No active event {now}")
+        return None
 
-    def get_next_change_event(self, now: datetime = None) -> typing.Optional[Event]:
-        return self._get_next_change_event(events=self.events, now=now)
-
-    def _get_next_change_event(
+    def _calc_next_change_event(
         self, events: list[Event], now: datetime = None
     ) -> typing.Optional[Event]:
         now = now or self._now()
 
-        current_event = self._get_active_event(events=events, now=now)
+        current_event = self._calc_active_event(events=events, now=now)
         for event in events:
             if (
                 current_event.end <= event.start
