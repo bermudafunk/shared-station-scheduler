@@ -110,7 +110,7 @@ class Main:
 
     async def change_on_change_event(self):
         try:
-            while event := self._pep.next_change_event is not None:
+            while (event := self._pep.next_change_event) is not None:
                 time_to_sleep = event.time_left()
                 if time_to_sleep < 0.5:
                     time.sleep(time_to_sleep)
