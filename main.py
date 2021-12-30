@@ -111,7 +111,7 @@ class Main:
     async def change_on_change_event(self):
         try:
             while (event := self._pep.next_change_event) is not None:
-                time_to_sleep = event.time_left()
+                time_to_sleep = event.time_left().total_seconds()
                 if time_to_sleep < 0.5:
                     time.sleep(time_to_sleep)
                     await asyncio.gather(
