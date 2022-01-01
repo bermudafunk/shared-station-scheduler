@@ -1,4 +1,6 @@
 import asyncio
+import functools
+import signal
 import time
 import typing
 
@@ -79,14 +81,17 @@ class Main:
                 self.change_on_change_event_task = None
 
     async def set_rds_encoder_state(self):
-        rds_dataset = Programme[self._pep.active_event.summary].rds_dataset
-        command = DataSetSelectCommand(select_data_set_number=rds_dataset)
+        try:
+            rds_dataset = Programme[self._pep.active_event.summary].rds_dataset
+            command = DataSetSelectCommand(select_data_set_number=rds_dataset)
 
-        frame = UECPFrame()
-        frame.add_command(command)
+            frame = UECPFrame()
+            frame.add_command(command)
 
-        self._uecp_writer.write(frame.encode())
-        await self._uecp_writer.drain()
+            self._uecp_writer.write(frame.encode())
+            await asyncio.wait_for(self._uecp_writer.drain(), 10)
+        except Exception as e:
+            print(f"During setting the rds data set an error occurred {e!r}")
 
     async def ensure_rds_encoder_state(self):
         try:
@@ -98,11 +103,16 @@ class Main:
 
     async def set_solus_selector_state(self):
         selector_value = Programme[self._pep.active_event.summary].solus_selector
-        async with aiohttp.ClientSession() as session:
-            await session.post(
-                config.UKW_SELECTOR_URL,
-                json={"position": selector_value},
-            )
+        try:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as session:
+                await session.post(
+                    config.UKW_SELECTOR_URL,
+                    json={"position": selector_value},
+                )
+        except Exception as e:
+            print(f"During setting the selector an error occurred {e!r}")
 
     async def ensure_solus_selector_state(self):
         try:
@@ -129,6 +139,18 @@ class Main:
 
 
 async def main():
+    def ask_exit(signame):
+        print("got signal %s: exit" % signame)
+        for task in asyncio.all_tasks():
+            task.cancel()
+
+    loop = asyncio.get_running_loop()
+
+    for signame in {"SIGINT", "SIGTERM"}:
+        loop.add_signal_handler(
+            getattr(signal, signame), functools.partial(ask_exit, signame)
+        )
+
     main = await Main.create()
 
     try:
