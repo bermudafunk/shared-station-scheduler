@@ -2,7 +2,7 @@ import asyncio
 import time
 import typing
 
-from uecp.commands import DataSetSelectCommand, RDSEnabledSetCommand
+from uecp.commands import DataSetSelectCommand
 from uecp.frame import UECPFrame
 
 from scheduler import config
@@ -87,20 +87,11 @@ class Main:
         self._uecp_writer.write(frame.encode())
         await self._uecp_writer.drain()
 
-    async def rds_on_off(self, enable):
-        frame = UECPFrame()
-        frame.add_command(RDSEnabledSetCommand(enable=enable))
-
-        self._uecp_writer.write(frame.encode())
-        await self._uecp_writer.drain()
-
     async def ensure_rds_encoder_state(self):
         try:
             while True:
-                await self.rds_on_off(False)
-                await asyncio.sleep(5)
-                await self.rds_on_off(True)
-                await asyncio.sleep(5)
+                await self.set_rds_encoder_state()
+                await asyncio.sleep(60)
         except asyncio.CancelledError:
             pass
 
