@@ -2,6 +2,7 @@ import asyncio
 import time
 import typing
 
+import aiohttp
 from uecp.commands import DataSetSelectCommand
 from uecp.frame import UECPFrame
 
@@ -97,8 +98,11 @@ class Main:
 
     async def set_solus_selector_state(self):
         selector_value = Programme[self._pep.active_event.summary].solus_selector
-        # issue call to dispatcher
-        pass
+        async with aiohttp.ClientSession() as session:
+            await session.post(
+                config.UKW_SELECTOR_URL,
+                json={"position": selector_value},
+            )
 
     async def ensure_solus_selector_state(self):
         try:

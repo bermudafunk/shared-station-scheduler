@@ -10,6 +10,7 @@ python-decouple = "~=3.5"
 uecp = ">=0.3.0"
 pyserial = "~=3.5"
 pyserial-asyncio = "*"
+aiohttp = "~=3.8.1"
 
 [dev-packages]
 black = "~=21.12b0"
