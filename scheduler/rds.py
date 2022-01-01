@@ -1,11 +1,20 @@
-from asyncio import StreamWriter
+import asyncio
+import logging
+from asyncio import StreamReader, StreamWriter
 
 import serial
 from serial_asyncio import open_serial_connection
 
+logger = logging.getLogger(__name__)
+
+
+async def drain_reader(reader: StreamReader):
+    while data := await reader.read():
+        logger.warning(f"Received some data via serial port: {data!r}")
+
 
 async def open_serial_writer(port: str, baudrate: int) -> StreamWriter:
-    _, writer = await open_serial_connection(
+    reader, writer = await open_serial_connection(
         url=port,
         baudrate=baudrate,
         bytesize=serial.EIGHTBITS,
@@ -15,4 +24,5 @@ async def open_serial_writer(port: str, baudrate: int) -> StreamWriter:
         rtscts=False,
         dsrdtr=False,
     )
+    asyncio.create_task(drain_reader(reader))
     return writer
