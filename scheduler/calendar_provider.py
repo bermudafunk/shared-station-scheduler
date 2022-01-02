@@ -97,8 +97,8 @@ def check_continuous_monotonic_events(events: list[Event]):
 class ProgrammeEventProvider:
     DEFAULT_SPAN = timedelta(days=14)
 
-    RELOAD_INTERVAL = timedelta(seconds=30)
-    RELOAD_RETRY_ON_ERROR = timedelta(seconds=5)
+    RELOAD_INTERVAL = timedelta(minutes=5)
+    RELOAD_RETRY_ON_ERROR = timedelta(seconds=10)
 
     @classmethod
     async def create(cls, ics_url: str, tz: tzinfo):
