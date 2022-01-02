@@ -1,5 +1,6 @@
 import asyncio
 import enum
+import logging
 import typing
 from asyncio import CancelledError
 from datetime import datetime, timedelta, tzinfo
@@ -96,13 +97,14 @@ def check_continuous_monotonic_events(events: list[Event]):
 class ProgrammeEventProvider:
     DEFAULT_SPAN = timedelta(days=14)
 
-    RELOAD_INTERVAL = timedelta(minutes=5)
-    RELOAD_RETRY_ON_ERROR = timedelta(seconds=30)
+    RELOAD_INTERVAL = timedelta(seconds=30)
+    RELOAD_RETRY_ON_ERROR = timedelta(seconds=5)
 
     @classmethod
     async def create(cls, ics_url: str, tz: tzinfo):
         self = cls(ics_url=ics_url, tz=tz)
         await self.refresh_events()
+        asyncio.create_task(self.refresh_event_loop())
         return self
 
     def __init__(
@@ -127,6 +129,7 @@ class ProgrammeEventProvider:
         return _now(self._tz)
 
     async def refresh_events(self, start: datetime = None, end: datetime = None):
+        logging.debug("Refresh events")
         start = start or self._now()
         end = end or (start + self.DEFAULT_SPAN)
 
@@ -151,23 +154,28 @@ class ProgrammeEventProvider:
         ) = self._next_change_event, self._calc_next_change_event(events)
 
         if old_active_event != self._active_event:
+            logging.debug("Calling active event observers")
             for observer in self.active_event_observers:
                 observer()
 
         if old_next_change_event != self._next_change_event:
+            logging.debug("Calling next change event observers")
             for observer in self.next_change_event_observers:
                 observer()
+
+        logging.debug("Refreshed events")
 
     async def refresh_event_loop(self):
         while True:
             try:
                 await self.refresh_events()
                 time_to_sleep = self.RELOAD_INTERVAL - (self._now() - self._last_load)
+                logging.debug(f"Sleeping {time_to_sleep} between refreshing events")
                 await asyncio.sleep(time_to_sleep.total_seconds())
             except CancelledError:
                 return
             except Exception as e:
-                print(e)
+                logging.debug(f"Error happened during refreshing events {e!r}")
                 await asyncio.sleep(self.RELOAD_RETRY_ON_ERROR.total_seconds())
 
     @property
@@ -176,17 +184,18 @@ class ProgrammeEventProvider:
 
     @property
     def active_event(self) -> typing.Optional[Event]:
+        self._active_event = self._calc_active_event(self._events)
         return self._active_event
 
     @property
     def next_change_event(self) -> typing.Optional[Event]:
+        self._next_change_event = self._calc_next_change_event(self._events)
         return self._next_change_event
 
     def _calc_active_event(
         self, events: list[Event], now: datetime = None
     ) -> typing.Optional[Event]:
         now = now or self._now()
-        events = events
         for event in events:
             if event.start <= now <= event.end:
                 return event

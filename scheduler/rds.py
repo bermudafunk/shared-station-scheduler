@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from asyncio import StreamReader, StreamWriter
 
 import serial
@@ -7,7 +8,7 @@ from serial_asyncio import open_serial_connection
 
 async def drain_reader(reader: StreamReader):
     while data := await reader.read(1):
-        print(f"Received some data via serial port: {data!r}")
+        logging.debug(f"Received some data via serial port: {data!r}")
 
 
 async def open_serial_writer(port: str, baudrate: int) -> StreamWriter:
