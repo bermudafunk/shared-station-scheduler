@@ -9,6 +9,7 @@ from scheduler import config
 from scheduler.rds import open_serial_writer
 
 sequence_number = itertools.cycle(range(1, 256))
+a_b_toggle = itertools.cycle([True, False])
 
 
 async def set_rds_encoder_state(uecp_writer: StreamWriter):
@@ -24,7 +25,9 @@ async def set_rds_encoder_state(uecp_writer: StreamWriter):
         frame = UECPFrame()
         frame.sequence_counter = next(sequence_number)
         frame.add_command(command)
-        frame.add_command(RadioTextSetCommand(text=programme[1]))
+        frame.add_command(
+            RadioTextSetCommand(text=programme[1], a_b_toggle=next(a_b_toggle))
+        )
 
         data = frame.encode()
         uecp_writer.write(data)
