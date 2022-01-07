@@ -2,7 +2,7 @@ import asyncio
 import itertools
 from asyncio import StreamWriter
 
-from uecp.commands import ProgrammeServiceNameSetCommand
+from uecp.commands import ProgrammeServiceNameSetCommand, RadioTextSetCommand
 from uecp.frame import UECPFrame
 
 from scheduler import config
@@ -14,16 +14,17 @@ sequence_number = itertools.cycle(range(1, 256))
 async def set_rds_encoder_state(uecp_writer: StreamWriter):
     for programme in itertools.cycle(
         [
-            "R-AKTIV",
-            "bermuda",
+            ("R-AKTIV", "radioaktiv ist Hip"),
+            ("bermuda", "bermudafunk ist auch Hip"),
         ]
     ):
         print(f"Set ps to {programme}")
-        command = ProgrammeServiceNameSetCommand(ps=programme)
+        command = ProgrammeServiceNameSetCommand(ps=programme[0])
 
         frame = UECPFrame()
         frame.sequence_counter = next(sequence_number)
         frame.add_command(command)
+        frame.add_command(RadioTextSetCommand(text=programme[1]))
 
         data = frame.encode()
         uecp_writer.write(data)
