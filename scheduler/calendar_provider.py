@@ -65,11 +65,11 @@ class Programme(enum.Enum):
         return obj
 
     @property
-    def rds_dataset(self):
+    def rds_dataset(self) -> int:
         return self._rds_dataset
 
     @property
-    def solus_selector(self):
+    def solus_selector(self) -> int:
         return self._solus_selector
 
 
