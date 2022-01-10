@@ -1,3 +1,4 @@
+import asyncio
 import functools
 from datetime import datetime
 
@@ -46,3 +47,35 @@ class TestProgrammeEventProvider:
 
         assert ev.start == datetime(2021, 12, 12, 20, 00, 00, tzinfo=tz)
         assert ev.end == datetime(2021, 12, 12, 22, 00, 00, tzinfo=tz)
+
+        pep.refreshEventTask.cancel()
+        try:
+            await pep.refreshEventTask
+        except asyncio.CancelledError:
+            pass
+
+    @now(datetime(2022, 1, 10, 10, 10, 00, tzinfo=tz))
+    @pytest.mark.asyncio
+    async def test_pep2(self, shared_datadir, httpserver: HTTPServer):
+        content = (shared_datadir / "test_ics_2").read_text()
+        httpserver.expect_request("/ics").respond_with_data(content)
+
+        pep = await calendar_provider.ProgrammeEventProvider.create(
+            ics_url=httpserver.url_for("/ics"), tz=tz
+        )
+
+        ev = pep.active_event
+        assert ev.start == datetime(2022, 1, 10, 8, 0, 0, tzinfo=tz)
+        assert ev.end == datetime(2022, 1, 10, 10, 15, 0, tzinfo=tz)
+        assert ev.summary == "radioaktiv"
+
+        ev = pep.next_change_event
+        assert ev.start == datetime(2022, 1, 10, 10, 15, 0, tzinfo=tz)
+        assert ev.end == datetime(2022, 1, 10, 12, 0, 0, tzinfo=tz)
+        assert ev.summary == "bermudafunk"
+
+        pep.refreshEventTask.cancel()
+        try:
+            await pep.refreshEventTask
+        except asyncio.CancelledError:
+            pass

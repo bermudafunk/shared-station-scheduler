@@ -100,11 +100,13 @@ class ProgrammeEventProvider:
     RELOAD_INTERVAL = timedelta(minutes=5)
     RELOAD_RETRY_ON_ERROR = timedelta(seconds=10)
 
+    refreshEventTask: asyncio.Task
+
     @classmethod
     async def create(cls, ics_url: str, tz: tzinfo):
         self = cls(ics_url=ics_url, tz=tz)
         await self.refresh_events()
-        asyncio.create_task(self.refresh_event_loop())
+        self.refreshEventTask = asyncio.create_task(self.refresh_event_loop())
         return self
 
     def __init__(
@@ -207,6 +209,8 @@ class ProgrammeEventProvider:
         now = now or self._now()
 
         current_event = self._calc_active_event(events=events, now=now)
+        if current_event is None:
+            return events[0]
         for event in events:
             if (
                 current_event.end <= event.start
