@@ -75,6 +75,6 @@ function exec_radicale() {
   exec "${CMD[@]}"
 }
 
-#prepare_calendar
-#prepare_git_repository
+prepare_calendar
+prepare_git_repository
 exec_radicale
