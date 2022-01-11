@@ -20,6 +20,9 @@ except ImportError:
         return zip(a, b)
 
 
+logger = logging.getLogger(__name__)
+
+
 Event__eq__attributes = (
     "uid",
     "summary",
@@ -131,7 +134,7 @@ class ProgrammeEventProvider:
         return _now(self._tz)
 
     async def refresh_events(self, start: datetime = None, end: datetime = None):
-        logging.debug("Refresh events")
+        logger.debug("Refresh events")
         now = self._now()
         start = (start or now) - timedelta(days=2)
         end = end or (start + self.DEFAULT_SPAN)
@@ -156,23 +159,23 @@ class ProgrammeEventProvider:
             self._next_change_event,
         ) = self._next_change_event, self._calc_next_change_event(events)
 
-        logging.debug(
+        logger.debug(
             f"Old active event {old_active_event}, new active {self._active_event}"
         )
         if old_active_event != self._active_event:
-            logging.debug("Calling active event observers")
+            logger.debug("Calling active event observers")
             for observer in self.active_event_observers:
                 observer()
 
-        logging.debug(
+        logger.debug(
             f"Old next change event {old_next_change_event}, new next change event {self._next_change_event}"
         )
         if old_next_change_event != self._next_change_event:
-            logging.debug("Calling next change event observers")
+            logger.debug("Calling next change event observers")
             for observer in self.next_change_event_observers:
                 observer()
 
-        logging.debug("Refreshed events")
+        logger.debug("Refreshed events")
 
     async def refresh_event_loop(self):
         while True:
@@ -181,12 +184,12 @@ class ProgrammeEventProvider:
                 time_to_sleep = self.RELOAD_INTERVAL - (self._now() - self._last_load)
                 if time_to_sleep.total_seconds() < 1:
                     time_to_sleep = timedelta(seconds=1)
-                logging.debug(f"Sleeping {time_to_sleep} between refreshing events")
+                logger.debug(f"Sleeping {time_to_sleep} between refreshing events")
                 await asyncio.sleep(time_to_sleep.total_seconds())
             except CancelledError:
                 return
             except Exception as e:
-                logging.debug(f"Error happened during refreshing events {e!r}")
+                logger.debug(f"Error happened during refreshing events {e!r}")
                 await asyncio.sleep(self.RELOAD_RETRY_ON_ERROR.total_seconds())
 
     @property
