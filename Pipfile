@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-icalevents = {ref = "fix-issue-67-exceptions-scope", git = "https://github.com/chrko/icalevents.git"}
+icalevents = {ref = "fix-issue-67-exceptions-scope-v0.1.25-port", git = "https://github.com/chrko/icalevents.git"}
 python-dateutil = "~=2.8.2"
 python-decouple = "~=3.5"
 uecp = ">=0.3.0"

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "264050ae812fac1b40e34e58a930c5b390bfe13b8ae8fbb51534a4a856f43f80"
+            "sha256": "7c26400c33de6430691c47bc642fc591c0d6d023a90e850b85159529098a2471"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -220,23 +220,23 @@
         },
         "httplib2": {
             "hashes": [
-                "sha256:0efbcb8bfbfbc11578130d87d8afcc65c2274c6eb446e59fc674e4d7c972d327",
-                "sha256:8fa4dbf2fbf839b71f8c7837a831e00fcdc860feca99b8bda58ceae4bc53d185"
+                "sha256:6b937120e7d786482881b44b8eec230c1ee1c5c1d06bce8cc865f25abbbf713b",
+                "sha256:e404681d2fbcec7506bcb52c503f2b021e95bee0ef7d01e5c221468a2406d8dc"
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==0.20.1"
+            "version": "==0.20.2"
         },
         "icalendar": {
             "hashes": [
-                "sha256:7508a92b4e36049777640b0ae393e7219a16488d852841a0e57b44fe51d9f848",
-                "sha256:825209edeb8f3067cf31f0712b0fc9507b1ded270165f98f3176d6b50e8c7b78"
+                "sha256:cc73fa9c848744843046228cb66ea86cd8c18d73a51b140f7c003f760b84a997",
+                "sha256:cf1446ffdf1b6ad469451a8966cfa7694f5fac796ac6fc7cd93e28c51a637d2c"
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==4.0.8"
+            "version": "==4.0.9"
         },
         "icalevents": {
             "git": "https://github.com/chrko/icalevents.git",
-            "ref": "18f9c229c7af4f526ca25a2d3b0c2f2a810a16a1"
+            "ref": "21dbaa052c45d8e049dbab568774aa3ef4f6f8cd"
         },
         "idna": {
             "hashes": [
@@ -345,11 +345,11 @@
         },
         "pyparsing": {
             "hashes": [
-                "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1",
-                "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"
+                "sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4",
+                "sha256:d9bdec0013ef1eb5a84ab39a3b3868911598afa494f5faa038647101504e2b81"
             ],
-            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==2.4.7"
+            "markers": "python_version >= '3.1'",
+            "version": "==3.0.6"
         },
         "pyserial": {
             "hashes": [
@@ -687,11 +687,11 @@
         },
         "pyparsing": {
             "hashes": [
-                "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1",
-                "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"
+                "sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4",
+                "sha256:d9bdec0013ef1eb5a84ab39a3b3868911598afa494f5faa038647101504e2b81"
             ],
-            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==2.4.7"
+            "markers": "python_version >= '3.1'",
+            "version": "==3.0.6"
         },
         "pytest": {
             "hashes": [
