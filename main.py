@@ -88,7 +88,6 @@ class Main:
                 logging.debug("Cancel ensure rds encoder state task")
                 try:
                     self.ensure_rds_encoder_state_task.cancel()
-                    self.ensure_rds_encoder_state_task.result()
                 except Exception as e:
                     logging.debug(
                         f"Exception during canceling ensure rds encoder state task: {e!r}"
@@ -99,7 +98,6 @@ class Main:
                 logging.debug("Cancel ensure solus selector state task")
                 try:
                     self.ensure_solus_selector_state_task.cancel()
-                    self.ensure_solus_selector_state_task.result()
                 except Exception as e:
                     logging.debug(
                         f"Exception during canceling solus selector state task {e!r}"
@@ -121,7 +119,6 @@ class Main:
                 logging.debug("Cancel change on change event task")
                 try:
                     self.change_on_change_event_task.cancel()
-                    self.change_on_change_event_task.result()
                 except Exception as e:
                     logging.debug(
                         f"Exception occured during canceling change on change event task {e!r}"
