@@ -132,7 +132,7 @@ class ProgrammeEventProvider:
 
     async def refresh_events(self, start: datetime = None, end: datetime = None):
         logging.debug("Refresh events")
-        start = start or self._now()
+        start = (start or self._now()) - timedelta(days=2)
         end = end or (start + self.DEFAULT_SPAN)
 
         events = await asyncio.to_thread(
