@@ -155,11 +155,17 @@ class ProgrammeEventProvider:
             self._next_change_event,
         ) = self._next_change_event, self._calc_next_change_event(events)
 
+        logging.debug(
+            f"Old active event {old_active_event}, new active {self._active_event}"
+        )
         if old_active_event != self._active_event:
             logging.debug("Calling active event observers")
             for observer in self.active_event_observers:
                 observer()
 
+        logging.debug(
+            f"Old next change event {old_next_change_event}, new next change event {self._next_change_event}"
+        )
         if old_next_change_event != self._next_change_event:
             logging.debug("Calling next change event observers")
             for observer in self.next_change_event_observers:
