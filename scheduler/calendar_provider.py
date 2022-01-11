@@ -178,6 +178,8 @@ class ProgrammeEventProvider:
             try:
                 await self.refresh_events()
                 time_to_sleep = self.RELOAD_INTERVAL - (self._now() - self._last_load)
+                if time_to_sleep.total_seconds() < 1:
+                    time_to_sleep = timedelta(seconds=1)
                 logging.debug(f"Sleeping {time_to_sleep} between refreshing events")
                 await asyncio.sleep(time_to_sleep.total_seconds())
             except CancelledError:
