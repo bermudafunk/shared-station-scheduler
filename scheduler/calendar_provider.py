@@ -6,6 +6,7 @@ from asyncio import CancelledError
 from datetime import datetime, timedelta, tzinfo
 
 import prometheus_client
+from dateutil.relativedelta import MO, relativedelta
 from icalevents import icalevents
 from icalevents.icalparser import Event
 
@@ -99,8 +100,6 @@ def check_continuous_monotonic_events(events: list[Event]):
 
 
 class ProgrammeEventProvider:
-    DEFAULT_SPAN = timedelta(days=14)
-
     RELOAD_INTERVAL = timedelta(minutes=5)
     RELOAD_RETRY_ON_ERROR = timedelta(seconds=10)
 
@@ -109,12 +108,12 @@ class ProgrammeEventProvider:
     ACTIVE_EVENT = prometheus_client.Enum(
         "calendar_active_event",
         "Active event",
-        states=[p.name for p in list(Programme)] + ["none"],
+        states=[p.name for p in Programme] + ["none"],
     )
     NEXT_CHANGE_EVENT = prometheus_client.Enum(
         "calendar_next_change_event",
         "Next change event",
-        states=[p.name for p in list(Programme)] + ["none"],
+        states=[p.name for p in Programme] + ["none"],
     )
     REFRESH_TRIES_TOTAL = prometheus_client.Counter(
         "calendar_refresh_tries", "Method calls to refresh"
@@ -124,6 +123,18 @@ class ProgrammeEventProvider:
     )
     REFRESH_FAILURE_TOTAL = prometheus_client.Counter(
         "calendar_refresh_failures", "Refresh failures"
+    )
+
+    AIRTIME_SECONDS = prometheus_client.Gauge(
+        "calendar_airtime_seconds",
+        "Airtime of each programm in two weeks",
+        ["programme"],
+    )
+    AIRTIME_START = prometheus_client.Gauge(
+        "calendar_airtime_start_seconds", "Airtime calculation start seconds"
+    )
+    AIRTIME_STOP = prometheus_client.Gauge(
+        "calendar_airtime_stop_seconds", "Airtime calculation start seconds"
     )
 
     @classmethod
@@ -154,12 +165,18 @@ class ProgrammeEventProvider:
     def _now(self) -> datetime:
         return _now(self._tz)
 
-    async def refresh_events(self, start: datetime = None, end: datetime = None):
+    async def refresh_events(self):
         self.REFRESH_TRIES_TOTAL.inc()
         logger.debug("Refresh events")
         now = self._now()
-        start = start or now
-        end = end or (start + self.DEFAULT_SPAN)
+        start = (
+            now
+            - relativedelta(
+                weekday=MO, weeks=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            + timedelta.resolution
+        )
+        end = start + relativedelta(weekday=MO, weeks=2) - timedelta.resolution * 2
 
         events = await asyncio.to_thread(
             icalevents.events, url=self._ics_url, start=start, end=end
@@ -205,6 +222,8 @@ class ProgrammeEventProvider:
                 observer()
 
         logger.debug("Refreshed events")
+        self.calc_airtime_distribution()
+
         self.REFRESH_SUCCESSFUL_TOTAL.inc()
 
     async def refresh_event_loop(self):
@@ -262,3 +281,16 @@ class ProgrammeEventProvider:
                 return event
 
         return None
+
+    def calc_airtime_distribution(self):
+        airtime_by_programme = {p: timedelta() for p in Programme}
+        events = self.events
+
+        for event in events:
+            airtime_by_programme[Programme[event.summary]] += event.end - event.start
+
+        for programme, airtime in airtime_by_programme.items():
+            self.AIRTIME_SECONDS.labels(programme.name).set(airtime.total_seconds())
+
+        self.AIRTIME_START.set(events[0].start.timestamp())
+        self.AIRTIME_STOP.set(events[-1].end.timestamp())
