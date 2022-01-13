@@ -5,6 +5,7 @@ import typing
 from asyncio import CancelledError
 from datetime import datetime, timedelta, tzinfo
 
+import prometheus_client
 from icalevents import icalevents
 from icalevents.icalparser import Event
 
@@ -105,6 +106,26 @@ class ProgrammeEventProvider:
 
     refreshEventTask: asyncio.Task
 
+    ACTIVE_EVENT = prometheus_client.Enum(
+        "calendar_active_event",
+        "Active event",
+        states=[p.name for p in list(Programme)] + ["none"],
+    )
+    NEXT_CHANGE_EVENT = prometheus_client.Enum(
+        "calendar_next_change_event",
+        "Next change event",
+        states=[p.name for p in list(Programme)] + ["none"],
+    )
+    REFRESH_TRIES_TOTAL = prometheus_client.Counter(
+        "calendar_refresh_tries", "Method calls to refresh"
+    )
+    REFRESH_SUCCESSFUL_TOTAL = prometheus_client.Counter(
+        "calendar_refresh", "Method calls to refresh successfully"
+    )
+    REFRESH_FAILURE_TOTAL = prometheus_client.Counter(
+        "calendar_refresh_failures", "Refresh failures"
+    )
+
     @classmethod
     async def create(cls, ics_url: str, tz: tzinfo):
         self = cls(ics_url=ics_url, tz=tz)
@@ -134,6 +155,7 @@ class ProgrammeEventProvider:
         return _now(self._tz)
 
     async def refresh_events(self, start: datetime = None, end: datetime = None):
+        self.REFRESH_TRIES_TOTAL.inc()
         logger.debug("Refresh events")
         now = self._now()
         start = start or now
@@ -154,10 +176,17 @@ class ProgrammeEventProvider:
             old_active_event,
             self._active_event,
         ) = self._active_event, self._calc_active_event(events)
+        self.ACTIVE_EVENT.state(
+            self._active_event.summary if self._active_event else "none"
+        )
+
         (
             old_next_change_event,
             self._next_change_event,
         ) = self._next_change_event, self._calc_next_change_event(events)
+        self.NEXT_CHANGE_EVENT.state(
+            self._next_change_event.summary if self._next_change_event else "none"
+        )
 
         logger.debug(
             f"Old active event {old_active_event}, new active {self._active_event}"
@@ -176,6 +205,7 @@ class ProgrammeEventProvider:
                 observer()
 
         logger.debug("Refreshed events")
+        self.REFRESH_SUCCESSFUL_TOTAL.inc()
 
     async def refresh_event_loop(self):
         while True:
@@ -189,7 +219,8 @@ class ProgrammeEventProvider:
             except CancelledError:
                 return
             except Exception as e:
-                logger.debug(f"Error happened during refreshing events {e!r}")
+                logger.error(f"Error happened during refreshing events {e!r}")
+                self.REFRESH_FAILURE_TOTAL.inc()
                 await asyncio.sleep(self.RELOAD_RETRY_ON_ERROR.total_seconds())
 
     @property
