@@ -4,22 +4,22 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-icalevents = "~=0.1.27"
-python-dateutil = "~=2.8.2"
-python-decouple = "~=3.5"
+icalevents = "~=0.3.1"
+python-dateutil = "~=2.9.0.post0"
+python-decouple = "~=3.8"
 uecp = ">=0.3.0"
 pyserial = "~=3.5"
 pyserial-asyncio = "*"
-aiohttp = "~=3.8.1"
+aiohttp = "~=3.13.2"
 prometheus-client = "*"
 prometheus-async = {extras = ["aiohttp"], version = "*"}
 
 [dev-packages]
-black = "~=21.12b0"
-pytest = "~=6.2.5"
+black = "~=25.9.0"
+pytest = "~=8.4.2"
 pytest-asyncio = "*"
 pytest-datadir = "*"
 pytest-httpserver = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.13"
